@@ -1,3 +1,17 @@
+修改内容：
+
+- 适配 conda 的 [robostack](https://robostack.github.io/index.html) 编译环境
+  - 环境：cmake=3 make=4.4.1 pcl=1.14.1 ros-noetic-pcl-ros=1.7.4
+  - 补充 `<memory>` 头文件，使用 `snprintf` 替换部分 `strncpy`，并将 `pcl::PointXYZI` 输出统一转换为 `sensor_msgs::PointCloud2` 后再发布或写入 rosbag，修复相关编译错误。
+- 新增 `timestamp_type` 状态输出 topic
+  - 单雷达时发布 `std_msgs/UInt8` 类型的 `livox/timestamp_type`，多雷达（`multi_topic=1`）时发布为 `livox/timestamp_type_<broadcast_code>`。
+  - `timestamp_type` 的取值定义与 Livox-SDK 中的 `TimestampType` 枚举保持一致，可直接反映当前原始数据包时间戳类型。
+  - 修正 `timestamp_type` 刷新逻辑：设备复位时初始化为 `kTimestampTypeUnknown`，收包后每个原始包都会更新，避免仅在点云数据类型变化时才刷新导致状态滞后。
+
+---
+
+原始 README：
+
 # Livox ROS Driver([览沃ROS驱动程序中文说明](https://github.com/Livox-SDK/livox_ros_driver/blob/master/README_CN.md))
 
 livox_ros_driver is a new ROS package, specially used to connect LiDAR products produced by Livox. The driver can be run under ubuntu 14.04/16.04/18.04 operating system with ROS environment (indigo, kinetic, melodic) installed. Tested hardware platforms that can run livox_ros_driver include: Intel x86 cpu platforms, and some ARM64 hardware platforms (such as nvida TX2 / Xavier, etc.).
