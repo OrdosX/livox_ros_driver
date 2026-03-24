@@ -33,6 +33,7 @@
 #include <rosbag/bag.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <livox_ros_driver/CustomMsg.h>
 #include <livox_ros_driver/CustomPoint.h>
@@ -340,11 +341,19 @@ uint32_t Lddc::PublishPointcloudData(LidarDataQueue *queue, uint32_t packet_num,
 
   ros::Publisher *p_publisher = Lddc::GetCurrentPublisher(handle);
   if (kOutputToRos == output_type_) {
-    p_publisher->publish(cloud);
+    // 将PCL点云转换为ROS消息
+    sensor_msgs::PointCloud2 ros_cloud;
+    pcl::toROSMsg(*cloud, ros_cloud);
+    ros_cloud.header.stamp = ros::Time::now();
+    ros_cloud.header.frame_id = frame_id_;
+    p_publisher->publish(ros_cloud);
   } else {
     if (bag_ && enable_lidar_bag_) {
-      bag_->write(p_publisher->getTopic(), ros::Time(timestamp / 1000000000.0),
-          cloud);
+      sensor_msgs::PointCloud2 ros_cloud;
+      pcl::toROSMsg(*cloud, ros_cloud);
+      ros_cloud.header.stamp = ros::Time(timestamp / 1000000000.0);
+      ros_cloud.header.frame_id = frame_id_;
+      bag_->write(p_publisher->getTopic(), ros::Time(timestamp / 1000000000.0), ros_cloud);
     }
   }
   if (!lidar->data_is_pubulished) {
