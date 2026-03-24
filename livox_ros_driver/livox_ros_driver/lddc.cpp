@@ -57,8 +57,10 @@ Lddc::Lddc(int format, int multi_topic, int data_src, int output_type,
   lds_ = nullptr;
   memset(private_pub_, 0, sizeof(private_pub_));
   memset(private_imu_pub_, 0, sizeof(private_imu_pub_));
+  memset(private_timestamp_type_pub_, 0, sizeof(private_timestamp_type_pub_));
   global_pub_ = nullptr;
   global_imu_pub_ = nullptr;
+  global_timestamp_type_pub_ = nullptr;
   cur_node_ = nullptr;
   bag_ = nullptr;
 };
@@ -70,6 +72,10 @@ Lddc::~Lddc() {
 
   if (global_imu_pub_) {
     delete global_imu_pub_;
+  }
+
+  if (global_timestamp_type_pub_) {
+    delete global_timestamp_type_pub_;
   }
 
   if (lds_) {
@@ -85,6 +91,12 @@ Lddc::~Lddc() {
   for (uint32_t i = 0; i < kMaxSourceLidar; i++) {
     if (private_imu_pub_[i]) {
       delete private_imu_pub_[i];
+    }
+  }
+
+  for (uint32_t i = 0; i < kMaxSourceLidar; i++) {
+    if (private_timestamp_type_pub_[i]) {
+      delete private_timestamp_type_pub_[i];
     }
   }
 }
@@ -575,6 +587,17 @@ void Lddc::PollingLidarImuData(uint8_t handle, LidarDevice *lidar) {
   }
 }
 
+void Lddc::PublishLidarTimestampType(uint8_t handle, LidarDevice *lidar) {
+  ros::Publisher *p_publisher = GetCurrentTimestampTypePublisher(handle);
+  if (p_publisher == nullptr) {
+    return;
+  }
+
+  std_msgs::UInt8 timestamp_type_msg;
+  timestamp_type_msg.data = static_cast<uint8_t>(lidar->timestamp_type);
+  p_publisher->publish(timestamp_type_msg);
+}
+
 void Lddc::DistributeLidarData(void) {
   if (lds_ == nullptr) {
     return;
@@ -588,6 +611,7 @@ void Lddc::DistributeLidarData(void) {
         (p_queue == nullptr)) {
       continue;
     }
+    PublishLidarTimestampType(lidar_id, lidar);
     PollingLidarPointCloudData(lidar_id, lidar);
     PollingLidarImuData(lidar_id, lidar);
   }
@@ -674,6 +698,39 @@ ros::Publisher *Lddc::GetCurrentImuPublisher(uint8_t handle) {
     **pub = cur_node_->advertise<sensor_msgs::Imu>(name_str, queue_size);
     ROS_INFO("%s publish imu data, set ROS publisher queue size %d", name_str,
              queue_size);
+  }
+
+  return *pub;
+}
+
+ros::Publisher *Lddc::GetCurrentTimestampTypePublisher(uint8_t handle) {
+  ros::Publisher **pub = nullptr;
+  uint32_t queue_size = kMinEthPacketQueueSize;
+
+  if (use_multi_topic_) {
+    pub = &private_timestamp_type_pub_[handle];
+    queue_size = queue_size * 2;
+  } else {
+    pub = &global_timestamp_type_pub_;
+    queue_size = queue_size * 8;
+  }
+
+  if (*pub == nullptr) {
+    char name_str[64];
+    memset(name_str, 0, sizeof(name_str));
+    if (use_multi_topic_) {
+      ROS_INFO("Support multi topics.");
+      snprintf(name_str, sizeof(name_str), "livox/timestamp_type_%s",
+               lds_->lidars_[handle].info.broadcast_code);
+    } else {
+      ROS_INFO("Support only one topic.");
+      snprintf(name_str, sizeof(name_str), "livox/timestamp_type");
+    }
+
+    *pub = new ros::Publisher;
+    **pub = cur_node_->advertise<std_msgs::UInt8>(name_str, queue_size, true);
+    ROS_INFO("%s publish timestamp type, set ROS publisher queue size %d",
+             name_str, queue_size);
   }
 
   return *pub;

@@ -596,6 +596,7 @@ void Lds::ResetLidar(LidarDevice *lidar, uint8_t data_src) {
   lidar->data_is_pubulished = false;
   lidar->connect_state = kConnectStateOff;
   lidar->raw_data_type = 0xFF;
+  lidar->timestamp_type = kTimestampTypeUnknown;
 }
 
 void Lds::SetLidarDataSrc(LidarDevice *lidar, uint8_t data_src) {
@@ -644,11 +645,11 @@ uint8_t Lds::GetDeviceType(uint8_t handle) {
 
 void Lds::UpdateLidarInfoByEthPacket(LidarDevice *p_lidar,
     LivoxEthPacket* eth_packet) {
+  p_lidar->timestamp_type = eth_packet->timestamp_type;
   if (p_lidar->raw_data_type != eth_packet->data_type) {
     p_lidar->raw_data_type = eth_packet->data_type;
     p_lidar->packet_interval = GetPacketInterval(p_lidar->info.type,
         eth_packet->data_type);
-    p_lidar->timestamp_type = eth_packet->timestamp_type;
     p_lidar->packet_interval_max = p_lidar->packet_interval * 1.8f;
     p_lidar->onetime_publish_packets =
         GetPacketNumPerSec(p_lidar->info.type,

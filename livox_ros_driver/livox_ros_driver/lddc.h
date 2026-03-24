@@ -30,6 +30,7 @@
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <pcl_ros/point_cloud.h>
+#include <std_msgs/UInt8.h>
 #include <livox_ros_driver/CustomMsg.h>
 #include <livox_ros_driver/CustomPoint.h>
 
@@ -76,9 +77,11 @@ class Lddc {
                                    uint8_t handle);
   uint32_t PublishImuData(LidarDataQueue *queue, uint32_t packet_num,
                           uint8_t handle);
+  void PublishLidarTimestampType(uint8_t handle, LidarDevice *lidar);
 
   ros::Publisher *GetCurrentPublisher(uint8_t handle);
   ros::Publisher *GetCurrentImuPublisher(uint8_t handle);
+  ros::Publisher *GetCurrentTimestampTypePublisher(uint8_t handle);
   void PollingLidarPointCloudData(uint8_t handle, LidarDevice *lidar);
   void PollingLidarImuData(uint8_t handle, LidarDevice *lidar);
   void InitPointcloud2MsgHeader(sensor_msgs::PointCloud2& cloud);
@@ -100,6 +103,8 @@ class Lddc {
   ros::Publisher *global_pub_;
   ros::Publisher *private_imu_pub_[kMaxSourceLidar];
   ros::Publisher *global_imu_pub_;
+  ros::Publisher *private_timestamp_type_pub_[kMaxSourceLidar];
+  ros::Publisher *global_timestamp_type_pub_;
 
   ros::NodeHandle *cur_node_;
   rosbag::Bag *bag_;
