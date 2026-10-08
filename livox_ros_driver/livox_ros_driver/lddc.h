@@ -66,6 +66,9 @@ class Lddc {
   Lds *lds_;
 
  private:
+  // Convert the measured live PTP time domain to ROS UTC nanoseconds.
+  uint64_t GetRosTimestamp(uint64_t timestamp, uint8_t timestamp_type, uint8_t data_source) const;
+  uint64_t ptp_utc_offset_ns_;
   int32_t GetPublishStartTime(LidarDevice *lidar, LidarDataQueue *queue,
                               uint64_t *start_time,
                               StoragePacket *storage_packet);

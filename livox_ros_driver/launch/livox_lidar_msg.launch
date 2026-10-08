@@ -1,5 +1,9 @@
 <launch>
 
+  <!-- 本 PTP master 的实测 currentUtcOffset；master 更换或闰秒变更时须重新核对 -->
+  <arg name="ptp_utc_offset" default="37"/>
+  <param name="ptp_utc_offset" type="int" value="$(arg ptp_utc_offset)"/>
+
 	<arg name="lvx_file_path" default="livox_test.lvx"/>
 	<arg name="bd_list" default="100000000000000"/>
 	<arg name="xfer_format" default="1"/>

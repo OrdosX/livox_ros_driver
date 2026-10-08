@@ -7,6 +7,7 @@
   - 单雷达时发布 `std_msgs/UInt8` 类型的 `livox/timestamp_type`，多雷达（`multi_topic=1`）时发布为 `livox/timestamp_type_<broadcast_code>`。
   - `timestamp_type` 的取值定义与 Livox-SDK 中的 `TimestampType` 枚举保持一致，可直接反映当前原始数据包时间戳类型。
   - 修正 `timestamp_type` 刷新逻辑：设备复位时初始化为 `kTimestampTypeUnknown`，收包后每个原始包都会更新，避免仅在点云数据类型变化时才刷新导致状态滞后。
+- 完善 PTP 时间同步支持，当 PTP master 遵循 IEEE 1588 标准提供 TAI 时间而不是 UTC 时间时，根据 launch 文件中的 `ptp_utc_offset` 计算时间偏移，以确保发布的点云时间戳为 UTC 时间。
 
 ---
 
